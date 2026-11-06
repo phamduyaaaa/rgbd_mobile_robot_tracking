@@ -57,7 +57,8 @@ Mở terminal **Ubuntu 24.04** (môi trường đã được tự nạp qua `~/.
 ```bash
 # Gazebo + RViz2
 ros2 launch da_cdt_robot_description gazebo.launch.py
-
+```
+```bash
 # Chỉ xem mô hình URDF trong RViz2 (kéo thanh trượt để xoay joint)
 ros2 launch da_cdt_robot_description display.launch.py
 ```
