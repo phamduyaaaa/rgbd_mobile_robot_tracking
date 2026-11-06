@@ -1,0 +1,95 @@
+# ROS 2 Jazzy (LTS, hỗ trợ đến 05/2029) + Gazebo Harmonic (LTS)
+# Image osrf/ros:jazzy-desktop-full có sẵn RViz2, robot_state_publisher, ros_gz_sim,
+# ros_gz_bridge và Gazebo Harmonic. Các gói còn thiếu (joint_state_publisher_gui, ...)
+# được cài thêm trong docker/Dockerfile.
+#
+# Chạy:   docker compose up -d --build --wait   (lần đầu tải và build image vài GB;
+#                                                lệnh chờ đến khi package build xong)
+# Vào:    docker compose exec ros2 bash
+# Tắt:    docker compose down
+#
+# Yêu cầu: Windows 11 + Docker Desktop (backend WSL2). Chạy được với GPU NVIDIA, AMD hoặc Intel.
+
+services:
+  ros2:
+    # Image gốc ghi trong docker/Dockerfile. Tag gốc được cập nhật theo thời gian; để môi trường
+    # cố định giữa các máy, ghim theo digest:
+    #   docker inspect --format '{{index .RepoDigests 0}}' osrf/ros:jazzy-desktop-full
+    # rồi thay dòng FROM trong Dockerfile bằng kết quả (dạng osrf/ros@sha256:...).
+    build:
+      context: ./docker
+    image: da_cdt_k18_ros2:jazzy
+    container_name: da_cdt_k18_ros2
+    working_dir: /ros2_ws
+    stdin_open: true
+    tty: true
+    network_mode: host
+    ipc: host
+    # PID 1 là init nhỏ (tini) để thu dọn tiến trình con mồ côi (zombie) khi tắt launch
+    init: true
+    # GPU ảo của WSL2: dùng chung cho mọi hãng GPU (NVIDIA/AMD/Intel), không cần `gpus: all`
+    # (`gpus: all` chỉ cần cho CUDA/nvidia-smi và làm hỏng compose trên máy không có NVIDIA).
+    devices:
+      - /dev/dxg
+
+    environment:
+      # Hiển thị GUI (Gazebo, RViz2) qua WSLg của Docker Desktop trên Windows
+      - DISPLAY=:0
+      - WAYLAND_DISPLAY=wayland-0
+      - XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
+      - PULSE_SERVER=/mnt/wslg/PulseServer
+      # Render bằng GPU qua Mesa D3D12 thay cho llvmpipe (CPU).
+      # Máy có nhiều GPU thì ưu tiên NVIDIA; máy không có NVIDIA Mesa tự chọn card khác (đã kiểm tra).
+      - GALLIUM_DRIVER=d3d12
+      - MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA
+      - LD_LIBRARY_PATH=/usr/lib/wsl/lib
+      - QT_X11_NO_MITSHM=1
+      - ROS_DOMAIN_ID=0
+
+    volumes:
+      # Mount package mô tả robot của đồ án vào workspace ROS 2
+      - ./da_cdt_robot_description:/ros2_ws/src/da_cdt_robot_description
+      # Giữ lại kết quả colcon build giữa các lần tắt/bật container
+      - ros2_build:/ros2_ws/build
+      - ros2_install:/ros2_ws/install
+      - ros2_log:/ros2_ws/log
+      # Thư viện D3D12 + driver GPU của Windows (cho Mesa d3d12 render bằng GPU)
+      - /usr/lib/wsl:/usr/lib/wsl:ro
+      # Socket X11/Wayland của WSLg (đường dẫn đặc thù Docker Desktop)
+      - /run/desktop/mnt/host/wslg/.X11-unix:/tmp/.X11-unix
+      - /run/desktop/mnt/host/wslg:/mnt/wslg
+
+    # Mỗi lần container khởi động:
+    #  1. Ghi lệnh source ROS vào ~/.bashrc (vì `docker compose exec` không chạy qua entrypoint).
+    #  2. Build package (lần đầu trên máy mới, hoặc khi có file/thư mục mới). Mất vài giây.
+    #     Log: docker compose logs ros2, chi tiết trong /ros2_ws/log/startup_build.log
+    #  3. sleep infinity giữ container chạy nền.
+    command:
+      - bash
+      - -c
+      - |
+        grep -q 'ros2_ws/install' ~/.bashrc || printf '%s\n' 'source /opt/ros/jazzy/setup.bash' '[ -f /ros2_ws/install/setup.bash ] && source /ros2_ws/install/setup.bash' >> ~/.bashrc
+        source /opt/ros/jazzy/setup.bash
+        cd /ros2_ws
+        rm -f /ros2_ws/install/.da_cdt_build_ok
+        if colcon build --symlink-install > /ros2_ws/log/startup_build.log 2>&1; then
+          touch /ros2_ws/install/.da_cdt_build_ok
+          echo "[da_cdt] Build OK, san sang chay: docker compose exec ros2 bash"
+        else
+          echo "[da_cdt] Build THAT BAI, xem: docker compose exec ros2 cat /ros2_ws/log/startup_build.log"
+        fi
+        exec sleep infinity
+
+    # Container chỉ "healthy" khi build xong; `docker compose up -d --wait` chờ đến lúc đó
+    # (build lỗi thì --wait báo lỗi sau ~5 phút, xem log như trên).
+    healthcheck:
+      test: ["CMD", "test", "-f", "/ros2_ws/install/.da_cdt_build_ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+      start_period: 10s
+
+volumes:
+  ros2_build:
+  ros2_install:
+  ros2_log:

@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phần cơ khí của robot: link, joint, khối lượng, quán tính, mesh.
+     Số liệu khối lượng/quán tính/vị trí joint lấy từ SolidWorks to URDF Exporter
+     (Commit Version: 1.6.0-4-g7f85cfe, Build Version: 1.6.7995.38578), xem urdf/da_cdt_robot.csv.
+
+     KHI XUẤT LẠI TỪ SOLIDWORKS: KHÔNG chép đè file này. Chỉ cập nhật các khối <inertial>,
+     <origin>/<axis> của joint và mesh từ file mới xuất. Những phần sửa tay dưới đây phải giữ lại:
+       - base_footprint (gốc cây TF, đặt ở mặt đất)
+       - hình va chạm đơn giản hoá (trụ/hộp/cầu) thay cho mesh STL
+       - joint caster đổi thành fixed
+     Plugin Gazebo, cảm biến, ma sát nằm ở da_cdt_robot.gazebo.xacro. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Gốc cây TF, nằm trên mặt đất ngay dưới base_link (theo REP 105, dùng cho Nav2).
+       Root link không có quán tính nên hết cảnh báo KDL về quán tính ở root link.
+       0.067861 = độ cao tâm bánh (0.033861) + bán kính bánh (0.034). -->
+  <link name="base_footprint" />
+  <joint name="joint_base_footprint" type="fixed">
+    <origin xyz="0 0 0.067861" rpy="0 0 0" />
+    <parent link="base_footprint" />
+    <child link="base_link" />
+  </joint>
+
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0.00535917894385861 5.60881299681223E-05 0.0248459745770875"
+        rpy="0 0 0" />
+      <mass
+        value="0.77992717564248" />
+      <inertia
+        ixx="0.00140723560834389"
+        ixy="-1.03280727276193E-08"
+        ixz="-2.67795769130674E-07"
+        iyy="0.0016199164393111"
+        iyz="-1.24573469043027E-09"
+        izz="0.00299885139037114" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://da_cdt_robot_description/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="da_cdt_khung">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <!-- Va chạm dùng hình trụ bao thân (hộp bao mesh: x, y trong ±0.1 m, z từ -0.0469 đến 0.063 m)
+         thay cho base_link.STL (~152 nghìn tam giác) để giảm tải vật lý.
+         Đáy trụ cách mặt đất ~2 cm nên không chạm đất khi robot chạy bình thường. -->
+    <collision>
+      <origin
+        xyz="0 0 0.00805"
+        rpy="0 0 0" />
+      <geometry>
+        <cylinder
+          radius="0.1"
+          length="0.1099" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="link_left_wheel">
+    <inertial>
+      <origin
+        xyz="3.35030336806597E-11 -1.07412828631581E-11 0.0123803157274746"
+        rpy="0 0 0" />
+      <mass
+        value="0.034948967905853" />
+      <inertia
+        ixx="1.52305073305072E-05"
+        ixy="-2.62471896751491E-10"
+        ixz="1.62193651053658E-14"
+        iyy="1.52297876067339E-05"
+        iyz="3.93045905830362E-14"
+        izz="2.57844981109313E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://da_cdt_robot_description/meshes/link_left_wheel.STL" />
+      </geometry>
+      <material
+        name="da_cdt_banh_xe">
+        <color
+          rgba="0.333333333333333 0.333333333333333 0.333333333333333 1" />
+      </material>
+    </visual>
+    <!-- Va chạm dùng hình trụ (r = 0.034 m đo từ mesh) thay cho STL để mô phỏng lăn ổn định -->
+    <collision>
+      <origin
+        xyz="0 0 0.0099"
+        rpy="0 0 0" />
+      <geometry>
+        <cylinder
+          radius="0.034"
+          length="0.032" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_left_wheel"
+    type="continuous">
+    <origin
+      xyz="-4.4038E-05 0.082187 -0.033861"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link_left_wheel" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="link_right_wheel">
+    <inertial>
+      <origin
+        xyz="-3.35029642917206E-11 -1.07411718408557E-11 -0.0123803157274747"
+        rpy="0 0 0" />
+      <mass
+        value="0.0349489679058519" />
+      <inertia
+        ixx="1.52305073304929E-05"
+        ixy="2.62471896864113E-10"
+        ixz="1.62186243174696E-14"
+        iyy="1.52297876067199E-05"
+        iyz="-3.93090361957947E-14"
+        izz="2.57844981109306E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://da_cdt_robot_description/meshes/link_right_wheel.STL" />
+      </geometry>
+      <material
+        name="da_cdt_banh_xe">
+        <color
+          rgba="0.333333333333333 0.333333333333333 0.333333333333333 1" />
+      </material>
+    </visual>
+    <!-- Va chạm dùng hình trụ (r = 0.034 m đo từ mesh) thay cho STL để mô phỏng lăn ổn định -->
+    <collision>
+      <origin
+        xyz="0 0 -0.0099"
+        rpy="0 0 0" />
+      <geometry>
+        <cylinder
+          radius="0.034"
+          length="0.032" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_right_wheel"
+    type="continuous">
+    <origin
+      xyz="4.4038E-05 -0.082187 -0.033861"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link_right_wheel" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="link_caster1">
+    <inertial>
+      <origin
+        xyz="0.00527811488376148 -0.000106206091729212 -0.00579018886404675"
+        rpy="0 0 0" />
+      <mass
+        value="0.00281986063852417" />
+      <inertia
+        ixx="2.37327072001014E-07"
+        ixy="3.93836556213161E-10"
+        ixz="2.69249843199402E-08"
+        iyy="2.15534973510052E-07"
+        iyz="4.86378538704613E-10"
+        izz="3.20808491825332E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://da_cdt_robot_description/meshes/link_caster1.STL" />
+      </geometry>
+      <material
+        name="da_cdt_khung">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://da_cdt_robot_description/meshes/link_caster1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <!-- Caster để fixed (SolidWorks xuất là continuous). Với ma sát joint 0.1 N.m, momen do
+       tiếp đất tạo ra (~3e-4 N.m) không đủ làm caster xoay, nên 2 joint continuous chỉ thêm
+       bậc tự do có quán tính rất nhỏ (~2e-7) mà không có tác dụng. Bánh caster là hình cầu
+       ma sát thấp nên vẫn trượt mượt theo mọi hướng. -->
+  <joint
+    name="joint_caster1"
+    type="fixed">
+    <origin
+      xyz="0.07 0 -0.036352"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link_caster1" />
+  </joint>
+  <link
+    name="link_caster2">
+    <inertial>
+      <origin
+        xyz="1.69135538907739E-17 -1.38777878078145E-17 -6.93889390390723E-18"
+        rpy="0 0 0" />
+      <mass
+        value="0.00382605152202027" />
+      <inertia
+        ixx="2.05650921220307E-07"
+        ixy="-4.04199835308076E-15"
+        ixz="-2.18074014943947E-09"
+        iyy="2.05611663304481E-07"
+        iyz="2.24529191287498E-13"
+        izz="3.26749719142583E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://da_cdt_robot_description/meshes/link_caster2.STL" />
+      </geometry>
+      <material
+        name="da_cdt_khung">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <!-- Va chạm dùng hình cầu (r = 0.0125 m đo từ mesh) để bánh caster trượt mượt -->
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <sphere
+          radius="0.0125" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_caster2"
+    type="fixed">
+    <origin
+      xyz="0.011719 0.0013111 -0.019"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="link_caster1" />
+    <child
+      link="link_caster2" />
+  </joint>
+  <link
+    name="link_camera">
+    <inertial>
+      <origin
+        xyz="0.00129537454616273 -3.02938896122595E-06 0.0264600870733192"
+        rpy="0 0 0" />
+      <mass
+        value="0.220446939797818" />
+      <inertia
+        ixx="0.000406101930366683"
+        ixy="4.49923169164281E-08"
+        ixz="1.58793391906706E-07"
+        iyy="4.67237498273719E-05"
+        iyz="2.0242442164855E-09"
+        izz="0.000425228479890681" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://da_cdt_robot_description/meshes/link_camera.STL" />
+      </geometry>
+      <material
+        name="da_cdt_camera">
+        <color
+          rgba="0.101960784313725 0.101960784313725 0.101960784313725 1" />
+      </material>
+    </visual>
+    <!-- Va chạm dùng hình hộp bao mesh link_camera.STL
+         (x -0.037..0.023, y ±0.0824, z -0.0028..0.0462) thay cho ~16 nghìn tam giác -->
+    <collision>
+      <origin
+        xyz="-0.007 0 0.0217"
+        rpy="0 0 0" />
+      <geometry>
+        <box
+          size="0.06 0.1648 0.049" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_camera"
+    type="fixed">
+    <origin
+      xyz="0.06 0 0.062839"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link_camera" />
+  </joint>
+
+  <!-- Frame quang học theo chuẩn ROS (REP 103): z hướng ra trước, x sang phải, y xuống dưới.
+       Đặt tại mặt trước mô hình camera (x = 0.023 m đo từ mesh). Ảnh màu, ảnh độ sâu,
+       camera_info và point cloud đều mang frame_id này. -->
+  <link name="link_camera_optical" />
+  <joint
+    name="joint_camera_optical"
+    type="fixed">
+    <origin
+      xyz="0.023 0 0.022"
+      rpy="-1.5708 0 -1.5708" />
+    <parent
+      link="link_camera" />
+    <child
+      link="link_camera_optical" />
+  </joint>
+</robot>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mô hình robot đồ án CĐT K18. Launch đọc file này bằng xacro.
+     Xem nhanh URDF đã ghép: xacro da_cdt_robot.urdf.xacro > /tmp/da_cdt_robot.urdf -->
+<robot name="da_cdt_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="da_cdt_robot_core.xacro" />
+  <xacro:include filename="da_cdt_robot.gazebo.xacro" />
+</robot>

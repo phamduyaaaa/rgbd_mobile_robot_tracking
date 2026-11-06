@@ -1,0 +1,70 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 0.5
+      Plane Cell Count: 20
+      Reference Frame: <Fixed Frame>
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Enabled: true
+      Description Source: Topic
+      Description Topic:
+        Value: /robot_description
+      Visual Enabled: true
+      Collision Enabled: false
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Names: false
+      Marker Scale: 0.2
+    - Class: rviz_default_plugins/Image
+      Name: Camera RGB
+      Enabled: true
+      Topic:
+        Value: /camera/color/image_raw
+        Reliability Policy: Best Effort
+    - Class: rviz_default_plugins/Image
+      Name: Camera Depth
+      Enabled: true
+      Topic:
+        Value: /camera/depth/image_raw
+        Reliability Policy: Best Effort
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Depth PointCloud
+      Enabled: false
+      Topic:
+        Value: /camera/depth/points
+        Reliability Policy: Best Effort
+      Style: Points
+      Size (Pixels): 2
+      Color Transformer: RGB8
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: odom
+    Frame Rate: 30
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 2.5
+      Focal Point:
+        X: 0.5
+        Y: 0
+        Z: 0
+      Pitch: 0.6
+      Yaw: 0.8
+      Target Frame: <Fixed Frame>
+Window Geometry:
+  Height: 900
+  Width: 1500
